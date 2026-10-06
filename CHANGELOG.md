@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Python `Exact` accepts non-string values.** `Exact(42)` raised
+  `TypeError`, and `Exact("42")` never matched the integer `42`, so pinning an
+  integer argument needed `Range(42, 42)`. `Exact` now takes int, float, bool,
+  `None`, list and dict values and matches them type-strictly, as the Rust core
+  already did. `Exact.matches()` accepts the same types, and
+  `ensure_constraint()` can wrap non-string literals.
 - **`tenuo.testing` grant assertions check real grants.** `assert_can_grant`
   passed the parent's `timedelta` TTL to the grant builder, so every grant
   failed with `TypeError`, and `assert_cannot_grant` passed for any grant,
