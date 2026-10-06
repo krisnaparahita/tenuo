@@ -16,6 +16,8 @@ from tenuo_core import Cidr, UrlPattern
 
 from tenuo import (
     Exact,
+    NotOneOf,
+    OneOf,
     Pattern,
     SigningKey,
     Warrant,
@@ -88,6 +90,41 @@ def test_exact_constraint_matching():
 
         with pytest.raises(ScopeViolation):
             delete_database(db_name="test-db-2")
+
+
+
+def test_oneof_non_string_values():
+    """OneOf and NotOneOf accept non-string values and match them type-strictly."""
+
+    @guard(tool="set_priority")
+    def set_priority(level: int) -> str:
+        return f"priority {level}"
+
+    kp = SigningKey.generate()
+    configure(issuer_key=kp, dev_mode=True)
+    warrant = Warrant.mint(
+        keypair=kp,
+        capabilities=Constraints.for_tool("set_priority", {"level": OneOf([1, 2, 3])}),
+        holder=kp.public_key,
+        ttl_seconds=60,
+    )
+
+    with warrant_scope(warrant), key_scope(kp):
+        assert set_priority(level=2) == "priority 2"
+
+        with pytest.raises(ScopeViolation):
+            set_priority(level=4)
+
+        with pytest.raises(ScopeViolation):
+            set_priority(level="2")
+
+    assert OneOf([1, 2]).contains(1)
+    assert not OneOf([1, 2]).contains("1")
+    assert OneOf(["a", 1, None]).contains(None)
+    assert OneOf([1, 2]).values == [1, 2]
+    assert not NotOneOf([0]).allows(0)
+    assert NotOneOf([0]).allows("0")
+    assert NotOneOf([0]).excluded == [0]
 
 
 def test_multiple_constraints():

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Python `OneOf` and `NotOneOf` accept non-string values.** `OneOf([1, 2])`
+  and `NotOneOf([0])` raised `TypeError`, although
+  `ensure_constraint`'s docstring recommends `OneOf([1, 2])`. Both now take int,
+  float, bool, `None`, list and dict values, mixed if needed, and match them
+  type-strictly in warrants, as the Rust core already did. `OneOf.contains()`
+  and `NotOneOf.allows()` accept the same types. For `Annotated` parameter
+  constraints, string sets still match non-string arguments by their `str()`
+  form, and `NotOneOf` excludes a value if either form is listed.
 - **`tenuo.testing` grant assertions check real grants.** `assert_can_grant`
   passed the parent's `timedelta` TTL to the grant builder, so every grant
   failed with `TypeError`, and `assert_cannot_grant` passed for any grant,
